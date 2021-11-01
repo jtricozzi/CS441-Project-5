@@ -6,6 +6,7 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -51,17 +52,18 @@ public class VideoPlayerActivity extends AppCompatActivity {
         });
 
         videoNameTV.setText(videoName);
+
         backIB.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                videoView.seekTo(videoView.getDuration() - 10000);
+                videoView.seekTo(videoView.getCurrentPosition() - 10000);
             }
         });
 
         forwardIB.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                videoView.seekTo(videoView.getDuration() + 10000);
+                videoView.seekTo(videoView.getCurrentPosition() + 10000);
             }
         });
 
@@ -73,7 +75,7 @@ public class VideoPlayerActivity extends AppCompatActivity {
                     playPauseIB.setImageDrawable(getResources().getDrawable(R.drawable.ic_play));
                 }else {
                     videoView.start();
-                    playPauseIB.setImageDrawable(getResources().getDrawable(R.drawable.ic_pause);
+                    playPauseIB.setImageDrawable(getResources().getDrawable(R.drawable.ic_pause));
                 }
             }
         });
@@ -91,6 +93,9 @@ public class VideoPlayerActivity extends AppCompatActivity {
                 }
             }
         });
+
+        setHandler();
+        initializeSeekbar();
     }
 
     private void showControls() {
@@ -106,17 +111,76 @@ public class VideoPlayerActivity extends AppCompatActivity {
         if(decorView != null) {
             int uiOption = decorView.getSystemUiVisibility();
             if(Build.VERSION.SDK_INT >= 14){
-                uiOption& = ~View.SYSTEM_UI_FLAG_LOW_PROFILE;
+                uiOption |= ~View.SYSTEM_UI_FLAG_LOW_PROFILE;
             }
 
-            if(Build.VERSION.SDK_INT >= 14){
-                uiOption& = ~View.SYSTEM_UI_FLAG_LOW_PROFILE;
+            if(Build.VERSION.SDK_INT >= 16){
+                uiOption |= ~View.SYSTEM_UI_FLAG_LOW_PROFILE;
             }
 
-            if(Build.VERSION.SDK_INT >= 14){
-                uiOption& = ~View.SYSTEM_UI_FLAG_LOW_PROFILE;
+            if(Build.VERSION.SDK_INT >= 19){
+                uiOption |= ~View.SYSTEM_UI_FLAG_LOW_PROFILE;
             }
         }
+    }
+
+    private void setHandler(){
+        Handler handler = new Handler();
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                if(videoView.getDuration() > 0) {
+                    int curPos = videoView.getCurrentPosition();
+                    videoSeekbar.setProgress(curPos);
+                    videoTimeTV.setText("" + convertTime(videoView.getDuration() - curPos));
+                }
+                handler.postDelayed(this, 0);
+            }
+        };
+        handler.postDelayed(runnable, 500);
+    }
+
+    private String convertTime(int ms){
+        String time;
+        int x, seconds, minutes, hours;
+        x = ms / 1000;
+        seconds = x % 60;
+        x /= 60;
+        minutes = x % 60;
+        x /= 60;
+        hours = x % 24;
+        if(hours != 0){
+            time = String.format("%02d", hours) + ":" + String.format("%02d", minutes) + ":" + String.format("%02d", seconds);
+        }else{
+            time = String.format("%02d", minutes) + ":" + String.format("%02d", seconds);
+        }
+        return time;
+    }
+
+    private void initializeSeekbar(){
+        videoSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if(videoSeekbar.getId() == R.id.idSeekBarProgress){
+                    if(fromUser){
+                        videoView.seekTo(progress);
+                        videoView.start();
+                        int curPos = videoView.getCurrentPosition();
+                        videoTimeTV.setText("" + convertTime(videoView.getDuration() - curPos));
+                    }
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
     }
 
     private void hideControls() {

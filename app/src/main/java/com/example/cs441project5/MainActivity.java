@@ -21,6 +21,7 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 
+//John Tricozzi
 public class MainActivity extends AppCompatActivity implements VideoRVAdapter.VideoClickInterface{
 
     private RecyclerView videoRV;
